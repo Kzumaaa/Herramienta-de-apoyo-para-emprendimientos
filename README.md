@@ -1,1 +1,1 @@
-Para utilizar esta herramienta es necesario instalar Visual Studio Code con la extensión de python, luego se carga el proyecto y se ejecuta
+Para utilizar esta herramienta es necesario instalar Visual Studio Code(Vscode) con la extensión de python, tambien se requiere descargar python de Microsoft Store o desde la página oficial, finalmente se carga el proyecto a Vscode y se ejecuta.
