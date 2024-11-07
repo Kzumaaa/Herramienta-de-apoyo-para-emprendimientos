@@ -4,23 +4,25 @@ from tkinter import messagebox
 
 import os
 import csv
+import re
 
 listaPersona = ["Persona Natural", "Persona Juridica"]
-listaTrl = ["TRL 1-3", "TRL 4-6", "TRL 6-7"]
+listaTrl = ["TRL 1-3", "TRL 1-5", "TRL 3-7", "TRL 4-6", "TRL 6-9"]
 listaAntig = ["No requerido", "Menor a 12 meses", "Entre 12-24 meses", "Entre 24-36 meses", "Mayor a 36 meses"]
 listaSector = ["Inteligencia Artificial", "Biotecnologia", "Fintech", "Tecnologias Limpias", "Software", "Todos"] 
 listaNvVentas = ["Sin ventas", "0UF-2.400 UF", "2.400UF-25.000UF", "25.000-100.000UF"] 
 listaVinculoUni = ["Sin vinculo universitario", "Si(Estudiante o egresado)", "Si(Colaboracion con universidades)"] 
 listaCofinanciamiento = ["Sin cofinanciamiento", "Si(20% aporte propio)", "Si(30% aporte propio)", "Si(40% aporte propio)"] 
-listaID = ["Requerido", "Opcional"]
+listaID = ["Bajo", "Moderado", "Moderado a alto", "Alto", "Muy alto"]
 listaTraccionC = ["No requerido", "Con validacion de mercado", "Con traccion inicial(0UF-350UF)", "Con validacion inicial(350UF-1750UF)", "Con alta traccion comercial(Mas de 1750UF)"]
 
 # Listas auxiliares para usuario
 
-# listaSector_Usuario = ["Inteligencia Artificial", "Biotecnologia", "Fintech", "Tecnologias Limpias", "Software"] 
+listaTrl_Usuario = ["Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4", "Nivel 5", "Nivel 6", "Nivel 7", "Nivel 8", "Nivel 9"]
+listaSector_Usuario = ["Inteligencia Artificial", "Biotecnologia", "Fintech", "Tecnologias Limpias", "Software"] 
 # listaNvVentas_Usuario = ["0UF-2.400 UF", "2.400UF-25.000UF", "25.000-100.000UF"]
 # listaVinculoUni_Usuario = ["Sin vinculo universitario", "Si(Estudiante o egresado)", "Si(Colaboracion con universidades)"]
-listaID_Usuario = ["Con I+D", "Sin I+D"]
+listaID_Usuario = ["Bajo", "Moderado", "Alto", "Muy alto"]
 # listaTraccionC_Usuario = ["Sin traccion comercial", "Con validacion de mercado", "Con traccion inicial(0UF-350UF)", "Con validacion inicial(350UF-1750UF)", "Con alta traccion comercial(Mas de 1750UF)"]
 
 info = []
@@ -182,9 +184,9 @@ def compatibilidad_fuente_financiamiento():
 
     nombre_emp_entry = Entry(user_info_frame,width=25)
     persona_combobox = Combobox(user_info_frame, values=listaPersona, state="readonly",width=25)
-    trl_combobox = Combobox(user_info_frame, values=listaTrl, state="readonly",width=25)
+    trl_combobox = Combobox(user_info_frame, values=listaTrl_Usuario, state="readonly",width=25)
     antiguedad_combobox = Combobox(user_info_frame, values=listaAntig, state="readonly",width=25)
-    sector_combobox = Combobox(user_info_frame, values=listaSector, state="readonly",width=25)
+    sector_combobox = Combobox(user_info_frame, values=listaSector_Usuario, state="readonly",width=25)
     ventas_anuales_combobox = Combobox(user_info_frame, values=listaNvVentas, state="readonly",width=25)
     vinculo_universidad_combobox = Combobox(user_info_frame, values=listaVinculoUni, state="readonly",width=30)
     cofinanciamiento_combobox = Combobox(user_info_frame, values=listaCofinanciamiento, state="readonly",width=25)
@@ -234,7 +236,7 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
         recomendacion = []
 
         subwindow = Toplevel(root)
-        subwindow.geometry("1024x768")
+        subwindow.geometry("1400x768")
         subwindow.title("Fuentes de financiamiento")
 
         frame = Frame(subwindow)
@@ -250,221 +252,178 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
         for x in range(len(data)): # filas del archivo
             datos = data[x].split(',')
             rec = []
-            #i = 0
-            if tpersona == 'Persona Juridica' and datos[1] == 'Persona Juridica': # Si el valor ingresado es Persona Juridica se descarta toda FF que requiera Persona Natural
-                rec.append("Tipo persona valida")
-                if trl != datos[2]: 
-                    if listaTrl.index(trl) < listaTrl.index(datos[2]): # Si mi trl es menor que el de la fuente de financiamiento
-                        rec.append("Se recomienda subir la escala de madurez tecnologica")
-                        #print("Se recomienda subir la escala de madurez tecnologica")
-                    elif listaTrl.index(trl) > listaTrl.index(datos[2]):
-                        rec.append("Su escala tecnologica supera la de esta fuente de financiamiento")
-                        #print("Su escala tecnologica supera la de esta fuente de financiamiento")
+            if tpersona == 'Persona Juridica':
+                if datos[1] == "Persona Natural":
+                    rec.append("Tipo persona no valida para este financiamiento")
                 else:
-                    rec.append("Trl cumplido")
-                    #print("Requisito cumplido")
-                    #i += 1
+                    rec.append("Tipo persona valida")
+                maxmin = re.findall(r'\d+', datos[2])
+                valor_trl = re.findall(r'\d+', trl)
+                if int(valor_trl[0]) >= int(maxmin[0]) and int(valor_trl[0]) <= int(maxmin[1]):
+                    rec.append("Su trl coincide con este financiamiento")
+                elif int(valor_trl[0]) < int(maxmin[0]):
+                    rec.append("Se recomienda subir la escala de madurez tecnologica")
+                elif int(valor_trl[0]) > int(maxmin[1]):
+                    rec.append("Su escala tecnologica supera la de esta fuente de financiamiento")
+                
                 if antiguedad != datos[3]:
                     if datos[3] == 'No requerido':
                         rec.append("Antiguedad cumplida")
-                        #print("Requisito cumplido")
-                        #i += 1
-                    elif listaAntig.index(antiguedad) < listaAntig.index(datos[3]): # 12 es menor q 24? Si
+                    elif listaAntig.index(antiguedad) < listaAntig.index(datos[3]):
                         rec.append("Se recomienda mas antiguedad")
-                        # print("Se recomienda mas antiguedad")
-                    elif listaAntig.index(antiguedad) > listaAntig.index(datos[3]): # 12 es menor q 24? Si
+                    elif listaAntig.index(antiguedad) > listaAntig.index(datos[3]):
                         rec.append("Superas la antiguedad requerida")
-                        #print("Superas la antiguedad requerida")
                 else:
                     rec.append("Antiguedad cumplida")
-                    # print("Requisito cumplido")
-                    #i += 1
                 if sector != datos[4]:
                     if datos[4] == 'Todos':
                         rec.append("Sector valido")
-                        #print("Requisito cumplido")
                     else:
                         rec.append("El sector no coincide con esta fuente de financiamiento")
-                        #print("Tu emprendimiento no coincide con esta fuente de financiamiento")
                 else:
                     rec.append("Sector valido")
-                    #print("Requisito cumplido")
-                    #i += 1
                 if NVentas != datos[5]:
                     if listaNvVentas.index(NVentas) < listaNvVentas.index(datos[5]):
                         rec.append("Se recomienda aumentar el nivel de ventas")
-                        #print("Se recomienda aumentar el nivel de ventas")
                     elif listaNvVentas.index(NVentas) > listaNvVentas.index(datos[5]):
                         rec.append("El nivel de ventas supera el de la fuente de financiamiento")
-                        #print("El nivel de ventas supera el de la fuente de financiamiento")
                 else:
-                    #i += 1
                     rec.append("Nivel de ventas cumplido")
-                    #print("Requisito cumplido")
                 if VinculoUni != datos[6]:
                     if datos[6] == "Sin vinculo universitario":
                         rec.append("Se recomienda abandonar el vinculo universitario")
-                        #print("Se recomienda abandonar el vinculo universitario")
                     elif VinculoUni == "Sin vinculo universitario":
                         rec.append("Se recomienda vincularse a universidad")
-                        #print("Se recomienda vincularse a universidad")
                     else:
                         rec.append("Vinculo universitario valido")
-                        #print("Vinculo universitario valido")
                 else:
-                    #i += 1
                     rec.append("Vinculo universitario valido")
-                    #print("Requisito cumplido")
                 if Cofinan != datos[7]:
                     if datos[7] == "Sin cofinanciamiento":
                         rec.append("Cofinanciamiento cumplido")
-                        #print("Requisito cumplido")
-                    elif listaCofinanciamiento.index(Cofinan) < listaCofinanciamiento.index(datos[7]): # 12 es menor q 24? Si
+                    elif listaCofinanciamiento.index(Cofinan) < listaCofinanciamiento.index(datos[7]):
                         rec.append("Se recomienda mayor cofinanciamiento")
-                        #print("Se recomienda mayor cofinanciamiento")
-                    elif listaCofinanciamiento.index(Cofinan) > listaCofinanciamiento.index(datos[7]): # 12 es menor q 24? Si
+                    elif listaCofinanciamiento.index(Cofinan) > listaCofinanciamiento.index(datos[7]):
                         rec.append("Cofinanciamiento superior al del financiamiento")
-                        #print("Cofinanciamiento superior al del financiamiento")
-                    #i += 1
                 else:
                     rec.append("Cofinanciamiento cumplido")
-                    #print("Requisito cumplido")
                 if ID != datos[8]:
-                    if datos[8] == "Opcional":
-                        rec.append("ID validado")
-                        #print("Requisito cumplido")
+                    if len(datos[8].split()) > 2:
+                        str = datos[8].replace(" a ",", ")
+                        str = str.split(", ")
+                        if ID.lower() == str[0].lower() or ID.lower() == str[1].lower():
+                            rec.append("Componente de investigacion y desarrollo valido")
+                        else:
+                            lista_aux = [item.lower() for item in listaID_Usuario]
+                            if lista_aux.index(ID.lower()) < lista_aux.index(str[0].lower()):
+                                rec.append("Componente I+D inferior al de este financiamiento")
+                            else:
+                                rec.append("Componente I+D superior al de este financiamiento") 
                     else:
-                        rec.append("Se recomienda componente de investigacion y desarrollo")
-                        #print("Se recomienda componente de investigacion y desarrollo")
+                        if listaID_Usuario.index(datos[8]) < listaID_Usuario.index(ID):
+                            rec.append("Componente I+D superior al de este financiamiento")
+                        else:
+                            rec.append("Componente I+D inferior al de este financiamiento")
                 else:
-                    rec.append("ID validado")
-                    #print("Requisito cumplido")
-                    #i += 1
+                    rec.append("Componente I+D valido para este financiamiento")
                 if TraccionC != datos[9]:
                     if datos[9] == "No requerido":
                         rec.append("Traccion comercial no requerida")
-                        #print("Requisito cumplido")
                     elif TraccionC == "Con validacion de mercado" and datos[9] in listaTraccionC:
                         rec.append("No cumple con el requisito")
-                        #print("No cumple con el requisito")
                     elif TraccionC in listaTraccionC and datos[9] == "Con validacion de mercado":
                         rec.append("No cumple con el requisito")
-                        #print("No cumple con el requisito")
                     else:
                         rec.append("No cumple con el requisito")
-                        #print("No cumple con el requisito")
                 else:
                     rec.append("Traccion comercial cumplida")
-                    #print("Requisito cumplido")
-                    #i += 1
 
             elif tpersona == 'Persona Natural': # Se agrega toda FF
                 if datos[1] == "Persona Juridica":
                     rec.append("Se recomienda convertirse en persona juridica")
-                    #print("Se recomienda convertirse en persona juridica")
                 else:
                     rec.append("Tipo de persona valida")
-                if trl != datos[2]: 
-                    if listaTrl.index(trl) < listaTrl.index(datos[2]): # Si mi trl es menor que el de la fuente de financiamiento
-                        rec.append("Se recomienda subir la escala de madurez tecnologica")
-                        #print("Se recomienda subir la escala de madurez tecnologica")
-                    elif listaTrl.index(trl) > listaTrl.index(datos[2]):
-                        rec.append("Su escala tecnologica supera la de esta fuente de financiamiento")
-                        #print("Su escala tecnologica supera la de esta fuente de financiamiento")
-                else:
-                    rec.append("Trl cumplido")
-                    #print("Requisito cumplido")
-                    #i += 1
+                
+                maxmin = re.findall(r'\d+', datos[2])
+                valor_trl = re.findall(r'\d+', trl)
+                if int(valor_trl[0]) >= int(maxmin[0]) and int(valor_trl[0]) <= int(maxmin[1]):
+                    rec.append("Su trl coincide con este financiamiento")
+                elif int(valor_trl[0]) < int(maxmin[0]):
+                    rec.append("Se recomienda subir la escala de madurez tecnologica")
+                elif int(valor_trl[0]) > int(maxmin[1]):
+                    rec.append("Su escala tecnologica supera la de esta fuente de financiamiento")
+                
                 if antiguedad != datos[3]:
                     if datos[3] == 'No requerido':
                         rec.append("Antiguedad cumplida")
-                        #print("Requisito cumplido")
-                        #i += 1
-                    elif listaAntig.index(antiguedad) < listaAntig.index(datos[3]): # 12 es menor q 24? Si
+                    elif listaAntig.index(antiguedad) < listaAntig.index(datos[3]):
                         rec.append("Se recomienda mas antiguedad")
-                        # print("Se recomienda mas antiguedad")
-                    elif listaAntig.index(antiguedad) > listaAntig.index(datos[3]): # 12 es menor q 24? Si
+                    elif listaAntig.index(antiguedad) > listaAntig.index(datos[3]):
                         rec.append("Superas la antiguedad requerida")
-                        #print("Superas la antiguedad requerida")
                 else:
                     rec.append("Antiguedad cumplida")
-                    # print("Requisito cumplido")
-                    #i += 1
                 if sector != datos[4]:
                     if datos[4] == 'Todos':
                         rec.append("Sector valido")
-                        #print("Requisito cumplido")
                     else:
                         rec.append("El sector no coincide con esta fuente de financiamiento")
-                        #print("Tu emprendimiento no coincide con esta fuente de financiamiento")
                 else:
                     rec.append("Sector valido")
-                    #print("Requisito cumplido")
-                    #i += 1
                 if NVentas != datos[5]:
                     if listaNvVentas.index(NVentas) < listaNvVentas.index(datos[5]):
                         rec.append("Se recomienda aumentar el nivel de ventas")
-                        #print("Se recomienda aumentar el nivel de ventas")
                     elif listaNvVentas.index(NVentas) > listaNvVentas.index(datos[5]):
                         rec.append("El nivel de ventas supera el de la fuente de financiamiento")
-                        #print("El nivel de ventas supera el de la fuente de financiamiento")
                 else:
-                    #i += 1
                     rec.append("Nivel de ventas cumplido")
-                    #print("Requisito cumplido")
                 if VinculoUni != datos[6]:
                     if datos[6] == "Sin vinculo universitario":
                         rec.append("Se recomienda abandonar el vinculo universitario")
-                        #print("Se recomienda abandonar el vinculo universitario")
                     elif VinculoUni == "Sin vinculo universitario":
                         rec.append("Se recomienda vincularse a universidad")
-                        #print("Se recomienda vincularse a universidad")
+                    else:
+                        rec.append("Vinculo universitario valido")
                 else:
-                    #i += 1
                     rec.append("Vinculo universitario valido")
-                    #print("Requisito cumplido")
                 if Cofinan != datos[7]:
                     if datos[7] == "Sin cofinanciamiento":
                         rec.append("Cofinanciamiento cumplido")
-                        #print("Requisito cumplido")
-                    elif listaCofinanciamiento.index(Cofinan) < listaCofinanciamiento.index(datos[7]): # 12 es menor q 24? Si
+                    elif listaCofinanciamiento.index(Cofinan) < listaCofinanciamiento.index(datos[7]):
                         rec.append("Se recomienda mayor cofinanciamiento")
-                        #print("Se recomienda mayor cofinanciamiento")
-                    elif listaCofinanciamiento.index(Cofinan) > listaCofinanciamiento.index(datos[7]): # 12 es menor q 24? Si
+                    elif listaCofinanciamiento.index(Cofinan) > listaCofinanciamiento.index(datos[7]):
                         rec.append("Cofinanciamiento superior al del financiamiento")
-                        #print("Cofinanciamiento superior al del financiamiento")
-                    #i += 1
                 else:
                     rec.append("Cofinanciamiento cumplido")
-                    #print("Requisito cumplido")
                 if ID != datos[8]:
-                    if datos[8] == "Opcional":
-                        rec.append("ID validado")
-                        #print("Requisito cumplido")
+                    if len(datos[8].split()) > 2:
+                        str = datos[8].replace(" a ",", ")
+                        str = str.split(", ")
+                        if ID.lower() == str[0].lower() or ID.lower() == str[1].lower():
+                            rec.append("Componente de investigacion y desarrollo valido")
+                        else:
+                            lista_aux = [item.lower() for item in listaID_Usuario]
+                            if lista_aux.index(ID.lower()) < lista_aux.index(str[0].lower()):
+                                rec.append("Componente I+D inferior al de este financiamiento")
+                            else:
+                                rec.append("Componente I+D superior al de este financiamiento") 
                     else:
-                        rec.append("Se recomienda componente de investigacion y desarrollo")
-                        #print("Se recomienda componente de investigacion y desarrollo")
+                        if listaID_Usuario.index(datos[8]) < listaID_Usuario.index(ID):
+                            rec.append("Componente I+D superior al de este financiamiento")
+                        else:
+                            rec.append("Componente I+D inferior al de este financiamiento")
                 else:
-                    rec.append("ID validado")
-                    #print("Requisito cumplido")
-                    #i += 1
+                    rec.append("Componente I+D valido para este financiamiento")
                 if TraccionC != datos[9]:
                     if datos[9] == "No requerido":
                         rec.append("Traccion comercial no requerida")
-                        #print("Requisito cumplido")
                     elif TraccionC == "Con validacion de mercado" and datos[9] in listaTraccionC:
                         rec.append("No cumple con el requisito")
-                        #print("No cumple con el requisito")
                     elif TraccionC in listaTraccionC and datos[9] == "Con validacion de mercado":
                         rec.append("No cumple con el requisito")
-                        #print("No cumple con el requisito")
                     else:
                         rec.append("No cumple con el requisito")
-                        #print("No cumple con el requisito")
                 else:
                     rec.append("Traccion comercial cumplida")
-                    #print("Requisito cumplido")
-                    #i += 1
             recomendacion.append(rec)
         visualizar_data()
         boton_anterior = Button(user_info_frame, text="Anterior", command=lambda: [disminuir_contador(), visualizar_data(), nombre_emp_label.config(text=info[0]), persona_label.config(text=info[1]), trl_label.config(text=info[2]), antiguedad_label.config(text=info[3]), sector_label.config(text=info[4]), ventas_anuales_label.config(text=info[5]), vinculo_universidad_label.config(text=info[6]), cofinanciamiento_label.config(text=info[7]), componenteid_label.config(text=info[8]), traccion_comercial_label.config(text=info[9]), recomendacion_persona_label.config(text=recomendacion[contador][0]),
@@ -499,6 +458,8 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
         fijo_cofinanciamiento_label = Label(user_info_frame, text="Cofinanciamiento")
         fijo_componenteid_label = Label(user_info_frame, text="Componente de I+D (Investigacion y Desarrollo)")
         fijo_traccion_comercial_label = Label(user_info_frame, text="Traccion comercial")
+
+        label_recomendacion = Label(user_info_frame, text="Recomendaciones")
 
         nombre_emp_usuario_label = Label(user_info_frame, text=nombre)
         persona_usuario_label = Label(user_info_frame, text=tpersona)
@@ -544,6 +505,8 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
         fijo_cofinanciamiento_label.grid(row=8, column=0)
         fijo_componenteid_label.grid(row=9, column=0)
         fijo_traccion_comercial_label.grid(row=10, column=0)
+
+        label_recomendacion.grid(row=1, column=3)
 
         nombre_emp_usuario_label.grid(row=1, column=1)
         persona_usuario_label.grid(row=2, column=1)
