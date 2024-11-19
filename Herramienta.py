@@ -159,12 +159,12 @@ def compatibilidad_fuente_financiamiento():
 
     subwindow = Toplevel(root)
     subwindow.geometry("1024x768")
-    subwindow.title("Agregar nueva fuente de financiamiento")
+    subwindow.title("Compatibilidad con fuente de financiamiento")
 
     frame = Frame(subwindow)
     frame.pack(pady=40)
 
-    user_info_frame = LabelFrame(frame, text="Nueva fuente de financiamiento")
+    user_info_frame = LabelFrame(frame, text="Ingrese sus datos")
     user_info_frame.pack(fill="both", expand="yes")
 
     # Seccion de labels
@@ -227,12 +227,30 @@ def compatibilidad_fuente_financiamiento():
     boton_guardado = Button(user_info_frame, text="Consultar", command=lambda: comparar_data(nombre_emp_entry.get(), persona_combobox.get(), trl_combobox.get(), antiguedad_combobox.get(), sector_combobox.get(), ventas_anuales_combobox.get(), vinculo_universidad_combobox.get(), cofinanciamiento_combobox.get(), componenteid_combobox.get(), traccion_comercial_combobox.get(),subwindow))
     boton_guardado.grid(row=22, column=0, sticky="news")
 
+def ordenar_lista():
+    global recomendacion
+    lista_ordenada = []
+    datos = []
+    with open("datos.csv", "r") as text:
+        for row in text:
+            parte = row.split(',')
+            datos.append(parte)
+    #print(datos)
+    for x in range(len(recomendacion)):
+        #print(recomendacion[x][0])
+        for y in range(len(datos)):
+            #print(datos[y])
+            if recomendacion[x][0] == datos[y][0]:
+                lista_ordenada.append(datos[y])
+    return lista_ordenada
+
 def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofinan,ID,TraccionC,subwindow): # en progreso
     if nombre and tpersona and trl and antiguedad and sector and NVentas and VinculoUni and Cofinan and ID and TraccionC:
         data = []
         global recomendacion
         global contador
         contador = 0
+        
         recomendacion = []
 
         subwindow = Toplevel(root)
@@ -250,16 +268,20 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                 data.append(row)
 
         for x in range(len(data)): # filas del archivo
+            counter = 0
             datos = data[x].split(',')
             rec = []
+            rec.append(datos[0])
             if tpersona == 'Persona Juridica':
                 if datos[1] == "Persona Natural":
                     rec.append("Tipo persona no valida para este financiamiento")
                 else:
+                    counter += 1
                     rec.append("Tipo persona valida")
                 maxmin = re.findall(r'\d+', datos[2])
                 valor_trl = re.findall(r'\d+', trl)
                 if int(valor_trl[0]) >= int(maxmin[0]) and int(valor_trl[0]) <= int(maxmin[1]):
+                    counter += 1
                     rec.append("Su trl coincide con este financiamiento")
                 elif int(valor_trl[0]) < int(maxmin[0]):
                     rec.append("Se recomienda subir la escala de madurez tecnologica")
@@ -268,19 +290,23 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                 
                 if antiguedad != datos[3]:
                     if datos[3] == 'No requerido':
+                        counter += 1
                         rec.append("Antiguedad cumplida")
                     elif listaAntig.index(antiguedad) < listaAntig.index(datos[3]):
                         rec.append("Se recomienda mas antiguedad")
                     elif listaAntig.index(antiguedad) > listaAntig.index(datos[3]):
                         rec.append("Superas la antiguedad requerida")
                 else:
+                    counter += 1
                     rec.append("Antiguedad cumplida")
                 if sector != datos[4]:
                     if datos[4] == 'Todos':
+                        counter += 1
                         rec.append("Sector valido")
                     else:
                         rec.append("El sector no coincide con esta fuente de financiamiento")
                 else:
+                    counter += 1
                     rec.append("Sector valido")
                 if NVentas != datos[5]:
                     if listaNvVentas.index(NVentas) < listaNvVentas.index(datos[5]):
@@ -288,6 +314,7 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                     elif listaNvVentas.index(NVentas) > listaNvVentas.index(datos[5]):
                         rec.append("El nivel de ventas supera el de la fuente de financiamiento")
                 else:
+                    counter += 1
                     rec.append("Nivel de ventas cumplido")
                 if VinculoUni != datos[6]:
                     if datos[6] == "Sin vinculo universitario":
@@ -295,23 +322,28 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                     elif VinculoUni == "Sin vinculo universitario":
                         rec.append("Se recomienda vincularse a universidad")
                     else:
+                        counter += 1
                         rec.append("Vinculo universitario valido")
                 else:
+                    counter += 1
                     rec.append("Vinculo universitario valido")
                 if Cofinan != datos[7]:
                     if datos[7] == "Sin cofinanciamiento":
+                        counter += 1
                         rec.append("Cofinanciamiento cumplido")
                     elif listaCofinanciamiento.index(Cofinan) < listaCofinanciamiento.index(datos[7]):
                         rec.append("Se recomienda mayor cofinanciamiento")
                     elif listaCofinanciamiento.index(Cofinan) > listaCofinanciamiento.index(datos[7]):
                         rec.append("Cofinanciamiento superior al del financiamiento")
                 else:
+                    counter += 1
                     rec.append("Cofinanciamiento cumplido")
                 if ID != datos[8]:
                     if len(datos[8].split()) > 2:
                         str = datos[8].replace(" a ",", ")
                         str = str.split(", ")
                         if ID.lower() == str[0].lower() or ID.lower() == str[1].lower():
+                            counter += 1
                             rec.append("Componente de investigacion y desarrollo valido")
                         else:
                             lista_aux = [item.lower() for item in listaID_Usuario]
@@ -325,9 +357,11 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                         else:
                             rec.append("Componente I+D inferior al de este financiamiento")
                 else:
+                    counter += 1
                     rec.append("Componente I+D valido para este financiamiento")
                 if TraccionC != datos[9]:
                     if datos[9] == "No requerido":
+                        counter += 1
                         rec.append("Traccion comercial no requerida")
                     elif TraccionC == "Con validacion de mercado" and datos[9] in listaTraccionC:
                         rec.append("No cumple con el requisito")
@@ -336,17 +370,20 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                     else:
                         rec.append("No cumple con el requisito")
                 else:
+                    counter += 1
                     rec.append("Traccion comercial cumplida")
 
             elif tpersona == 'Persona Natural': # Se agrega toda FF
                 if datos[1] == "Persona Juridica":
                     rec.append("Se recomienda convertirse en persona juridica")
                 else:
+                    counter += 1
                     rec.append("Tipo de persona valida")
                 
                 maxmin = re.findall(r'\d+', datos[2])
                 valor_trl = re.findall(r'\d+', trl)
                 if int(valor_trl[0]) >= int(maxmin[0]) and int(valor_trl[0]) <= int(maxmin[1]):
+                    counter += 1
                     rec.append("Su trl coincide con este financiamiento")
                 elif int(valor_trl[0]) < int(maxmin[0]):
                     rec.append("Se recomienda subir la escala de madurez tecnologica")
@@ -355,6 +392,7 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                 
                 if antiguedad != datos[3]:
                     if datos[3] == 'No requerido':
+                        counter += 1
                         rec.append("Antiguedad cumplida")
                     elif listaAntig.index(antiguedad) < listaAntig.index(datos[3]):
                         rec.append("Se recomienda mas antiguedad")
@@ -364,10 +402,12 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                     rec.append("Antiguedad cumplida")
                 if sector != datos[4]:
                     if datos[4] == 'Todos':
+                        counter += 1
                         rec.append("Sector valido")
                     else:
                         rec.append("El sector no coincide con esta fuente de financiamiento")
                 else:
+                    counter += 1
                     rec.append("Sector valido")
                 if NVentas != datos[5]:
                     if listaNvVentas.index(NVentas) < listaNvVentas.index(datos[5]):
@@ -375,6 +415,7 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                     elif listaNvVentas.index(NVentas) > listaNvVentas.index(datos[5]):
                         rec.append("El nivel de ventas supera el de la fuente de financiamiento")
                 else:
+                    counter += 1
                     rec.append("Nivel de ventas cumplido")
                 if VinculoUni != datos[6]:
                     if datos[6] == "Sin vinculo universitario":
@@ -382,23 +423,28 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                     elif VinculoUni == "Sin vinculo universitario":
                         rec.append("Se recomienda vincularse a universidad")
                     else:
+                        counter += 1
                         rec.append("Vinculo universitario valido")
                 else:
+                    counter += 1
                     rec.append("Vinculo universitario valido")
                 if Cofinan != datos[7]:
                     if datos[7] == "Sin cofinanciamiento":
+                        counter += 1
                         rec.append("Cofinanciamiento cumplido")
                     elif listaCofinanciamiento.index(Cofinan) < listaCofinanciamiento.index(datos[7]):
                         rec.append("Se recomienda mayor cofinanciamiento")
                     elif listaCofinanciamiento.index(Cofinan) > listaCofinanciamiento.index(datos[7]):
                         rec.append("Cofinanciamiento superior al del financiamiento")
                 else:
+                    counter += 1
                     rec.append("Cofinanciamiento cumplido")
                 if ID != datos[8]:
                     if len(datos[8].split()) > 2:
                         str = datos[8].replace(" a ",", ")
                         str = str.split(", ")
                         if ID.lower() == str[0].lower() or ID.lower() == str[1].lower():
+                            counter += 1
                             rec.append("Componente de investigacion y desarrollo valido")
                         else:
                             lista_aux = [item.lower() for item in listaID_Usuario]
@@ -412,9 +458,11 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                         else:
                             rec.append("Componente I+D inferior al de este financiamiento")
                 else:
+                    counter += 1
                     rec.append("Componente I+D valido para este financiamiento")
                 if TraccionC != datos[9]:
                     if datos[9] == "No requerido":
+                        counter += 1
                         rec.append("Traccion comercial no requerida")
                     elif TraccionC == "Con validacion de mercado" and datos[9] in listaTraccionC:
                         rec.append("No cumple con el requisito")
@@ -423,29 +471,33 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
                     else:
                         rec.append("No cumple con el requisito")
                 else:
+                    counter += 1
                     rec.append("Traccion comercial cumplida")
+            rec.append(counter)
             recomendacion.append(rec)
-        visualizar_data()
-        boton_anterior = Button(user_info_frame, text="Anterior", command=lambda: [disminuir_contador(), visualizar_data(), nombre_emp_label.config(text=info[0]), persona_label.config(text=info[1]), trl_label.config(text=info[2]), antiguedad_label.config(text=info[3]), sector_label.config(text=info[4]), ventas_anuales_label.config(text=info[5]), vinculo_universidad_label.config(text=info[6]), cofinanciamiento_label.config(text=info[7]), componenteid_label.config(text=info[8]), traccion_comercial_label.config(text=info[9]), recomendacion_persona_label.config(text=recomendacion[contador][0]),
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_trl_label.config(text=recomendacion[contador][1]),
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_antiguedad_label.config(text=recomendacion[contador][2]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_sector_label.config(text=recomendacion[contador][3]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_ventas_anuales_label.config(text=recomendacion[contador][4]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_vinculo_universidad_label.config(text=recomendacion[contador][5]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_cofinanciamiento_label.config(text=recomendacion[contador][6]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_componenteid_label.config(text=recomendacion[contador][7]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_traccion_comercial_label.config(text=recomendacion[contador][8])])
+
+        recomendacion = sorted(recomendacion, key=lambda x: x[10], reverse=True)
+        lista_ordenada = ordenar_lista()
+        boton_anterior = Button(user_info_frame, text="Anterior", command=lambda: [disminuir_contador(), visualizar_data(), nombre_emp_label.config(text=lista_ordenada[contador][0]), persona_label.config(text=lista_ordenada[contador][1]), trl_label.config(text=lista_ordenada[contador][2]), antiguedad_label.config(text=lista_ordenada[contador][3]), sector_label.config(text=lista_ordenada[contador][4]), ventas_anuales_label.config(text=lista_ordenada[contador][5]), vinculo_universidad_label.config(text=lista_ordenada[contador][6]), cofinanciamiento_label.config(text=lista_ordenada[contador][7]), componenteid_label.config(text=lista_ordenada[contador][8]), traccion_comercial_label.config(text=lista_ordenada[contador][9]), recomendacion_persona_label.config(text=recomendacion[contador][1]),
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_trl_label.config(text=recomendacion[contador][2]),
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_antiguedad_label.config(text=recomendacion[contador][3]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_sector_label.config(text=recomendacion[contador][4]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_ventas_anuales_label.config(text=recomendacion[contador][5]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_vinculo_universidad_label.config(text=recomendacion[contador][6]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_cofinanciamiento_label.config(text=recomendacion[contador][7]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_componenteid_label.config(text=recomendacion[contador][8]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_traccion_comercial_label.config(text=recomendacion[contador][9])])
         boton_anterior.grid(row=0, column=0)
 
-        boton_siguiente = Button(user_info_frame, text="Siguiente", command=lambda: [aumentar_contador(), visualizar_data(), nombre_emp_label.config(text=info[0]), persona_label.config(text=info[1]), trl_label.config(text=info[2]), antiguedad_label.config(text=info[3]), sector_label.config(text=info[4]), ventas_anuales_label.config(text=info[5]), vinculo_universidad_label.config(text=info[6]), cofinanciamiento_label.config(text=info[7]), componenteid_label.config(text=info[8]), traccion_comercial_label.config(text=info[9]), recomendacion_persona_label.config(text=recomendacion[contador][0]),
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_trl_label.config(text=recomendacion[contador][1]),
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_antiguedad_label.config(text=recomendacion[contador][2]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_sector_label.config(text=recomendacion[contador][3]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_ventas_anuales_label.config(text=recomendacion[contador][4]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_vinculo_universidad_label.config(text=recomendacion[contador][5]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_cofinanciamiento_label.config(text=recomendacion[contador][6]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_componenteid_label.config(text=recomendacion[contador][7]), 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_traccion_comercial_label.config(text=recomendacion[contador][8])])
+        boton_siguiente = Button(user_info_frame, text="Siguiente", command=lambda: [aumentar_contador(), visualizar_data(), nombre_emp_label.config(text=lista_ordenada[contador][0]), persona_label.config(text=lista_ordenada[contador][1]), trl_label.config(text=lista_ordenada[contador][2]), antiguedad_label.config(text=lista_ordenada[contador][3]), sector_label.config(text=lista_ordenada[contador][4]), ventas_anuales_label.config(text=lista_ordenada[contador][5]), vinculo_universidad_label.config(text=lista_ordenada[contador][6]), cofinanciamiento_label.config(text=lista_ordenada[contador][7]), componenteid_label.config(text=lista_ordenada[contador][8]), traccion_comercial_label.config(text=lista_ordenada[contador][9]), recomendacion_persona_label.config(text=recomendacion[contador][1]),
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_trl_label.config(text=recomendacion[contador][2]),
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_antiguedad_label.config(text=recomendacion[contador][3]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_sector_label.config(text=recomendacion[contador][4]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_ventas_anuales_label.config(text=recomendacion[contador][5]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_vinculo_universidad_label.config(text=recomendacion[contador][6]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_cofinanciamiento_label.config(text=recomendacion[contador][7]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_componenteid_label.config(text=recomendacion[contador][8]), 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                recomendacion_traccion_comercial_label.config(text=recomendacion[contador][9])])
         boton_siguiente.grid(row=0, column=1)
 
         fijo_nombre_emp_label = Label(user_info_frame, text="Nombre")
@@ -472,28 +524,28 @@ def comparar_data(nombre,tpersona,trl,antiguedad,sector,NVentas,VinculoUni,Cofin
         componenteid_usuario_label = Label(user_info_frame, text=ID)
         traccion_comercial_usuario_label = Label(user_info_frame, text=TraccionC)
 
-        nombre_emp_label = Label(user_info_frame, text=info[0])
-        persona_label = Label(user_info_frame, text=info[1])
-        trl_label = Label(user_info_frame, text=info[2])
-        antiguedad_label = Label(user_info_frame, text=info[3])
-        sector_label = Label(user_info_frame, text=info[4])
-        ventas_anuales_label = Label(user_info_frame, text=info[5])
-        vinculo_universidad_label = Label(user_info_frame, text=info[6])
-        cofinanciamiento_label = Label(user_info_frame, text=info[7])
-        componenteid_label = Label(user_info_frame, text=info[8])
-        traccion_comercial_label = Label(user_info_frame, text=info[9])
+        nombre_emp_label = Label(user_info_frame, text=lista_ordenada[contador][0])
+        persona_label = Label(user_info_frame, text=lista_ordenada[contador][1])
+        trl_label = Label(user_info_frame, text=lista_ordenada[contador][2])
+        antiguedad_label = Label(user_info_frame, text=lista_ordenada[contador][3])
+        sector_label = Label(user_info_frame, text=lista_ordenada[contador][4])
+        ventas_anuales_label = Label(user_info_frame, text=lista_ordenada[contador][5])
+        vinculo_universidad_label = Label(user_info_frame, text=lista_ordenada[contador][6])
+        cofinanciamiento_label = Label(user_info_frame, text=lista_ordenada[contador][7])
+        componenteid_label = Label(user_info_frame, text=lista_ordenada[contador][8])
+        traccion_comercial_label = Label(user_info_frame, text=lista_ordenada[contador][9])
 
 
 
-        recomendacion_persona_label = Label(user_info_frame, text=recomendacion[contador][0])
-        recomendacion_trl_label = Label(user_info_frame, text=recomendacion[contador][1])
-        recomendacion_antiguedad_label = Label(user_info_frame, text=recomendacion[contador][2])
-        recomendacion_sector_label = Label(user_info_frame, text=recomendacion[contador][3])
-        recomendacion_ventas_anuales_label = Label(user_info_frame, text=recomendacion[contador][4])
-        recomendacion_vinculo_universidad_label = Label(user_info_frame, text=recomendacion[contador][5])
-        recomendacion_cofinanciamiento_label = Label(user_info_frame, text=recomendacion[contador][6])
-        recomendacion_componenteid_label = Label(user_info_frame, text=recomendacion[contador][7])
-        recomendacion_traccion_comercial_label = Label(user_info_frame, text=recomendacion[contador][8])
+        recomendacion_persona_label = Label(user_info_frame, text=recomendacion[contador][1])
+        recomendacion_trl_label = Label(user_info_frame, text=recomendacion[contador][2])
+        recomendacion_antiguedad_label = Label(user_info_frame, text=recomendacion[contador][3])
+        recomendacion_sector_label = Label(user_info_frame, text=recomendacion[contador][4])
+        recomendacion_ventas_anuales_label = Label(user_info_frame, text=recomendacion[contador][5])
+        recomendacion_vinculo_universidad_label = Label(user_info_frame, text=recomendacion[contador][6])
+        recomendacion_cofinanciamiento_label = Label(user_info_frame, text=recomendacion[contador][7])
+        recomendacion_componenteid_label = Label(user_info_frame, text=recomendacion[contador][8])
+        recomendacion_traccion_comercial_label = Label(user_info_frame, text=recomendacion[contador][9])
 
         fijo_nombre_emp_label.grid(row=1, column=0)
         fijo_persona_label.grid(row=2, column=0)
